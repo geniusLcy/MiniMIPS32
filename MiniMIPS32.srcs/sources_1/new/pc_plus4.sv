@@ -3,9 +3,9 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 2021/06/14 18:04:09
+// Create Date: 2021/06/14 17:20:04
 // Design Name: 
-// Module Name: adder
+// Module Name: pc_plus4
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -19,14 +19,15 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-// adder module, parameter enabled
-module adder #(
-    parameter WIDTH = 32
-) (
-    input logic [WIDTH - 1 : 0] srcA,
-    input logic [WIDTH - 1 : 0] srcB,
-    output logic [WIDTH - 1 : 0] result
+
+module pc_plus4(
+    input logic [31:0] in,
+    output logic [31:0] out
     );
 
-    assign result = srcA + srcB;
+    adder plus4(
+        .srcA(in),
+        .srcB(4),
+        .result(out)
+    );
 endmodule

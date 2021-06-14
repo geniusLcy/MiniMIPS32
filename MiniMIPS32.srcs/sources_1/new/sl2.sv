@@ -3,9 +3,9 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 2021/06/14 18:04:09
+// Create Date: 2021/06/14 18:04:35
 // Design Name: 
-// Module Name: adder
+// Module Name: sl2
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -19,14 +19,8 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-// adder module, parameter enabled
-module adder #(
-    parameter WIDTH = 32
-) (
-    input logic [WIDTH - 1 : 0] srcA,
-    input logic [WIDTH - 1 : 0] srcB,
-    output logic [WIDTH - 1 : 0] result
-    );
 
-    assign result = srcA + srcB;
+module sl2(
+
+    );
 endmodule

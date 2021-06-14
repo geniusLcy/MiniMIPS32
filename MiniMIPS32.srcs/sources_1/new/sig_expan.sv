@@ -3,9 +3,9 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 2021/06/14 18:04:09
+// Create Date: 2021/06/14 16:15:18
 // Design Name: 
-// Module Name: adder
+// Module Name: sig_expan
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -19,14 +19,11 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-// adder module, parameter enabled
-module adder #(
-    parameter WIDTH = 32
-) (
-    input logic [WIDTH - 1 : 0] srcA,
-    input logic [WIDTH - 1 : 0] srcB,
-    output logic [WIDTH - 1 : 0] result
+// 符号扩展模块: 将16位立即数符号扩展位32位
+module sig_expan(
+    input logic [15:0] imm_to_expan,
+    output logic [31:0] sign_imm
     );
-
-    assign result = srcA + srcB;
+    
+    assign sign_imm = {{16{imm_to_expan[15]}}, imm_to_expan};
 endmodule
