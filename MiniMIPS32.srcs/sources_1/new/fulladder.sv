@@ -3,9 +3,9 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 2021/06/14 18:03:13
+// Create Date: 2021/07/04 09:37:20
 // Design Name: 
-// Module Name: maindec
+// Module Name: fulladder
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -20,7 +20,15 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module maindec(
-
+module fulladder(
+    input A,
+    input B,
+    input Cin,
+    output logic S,
+    output logic Cout
     );
+    
+    assign S = A ^ B ^ Cin;
+    assign Cout = (A & B) || (A & Cin) || (B & Cin);
+    
 endmodule

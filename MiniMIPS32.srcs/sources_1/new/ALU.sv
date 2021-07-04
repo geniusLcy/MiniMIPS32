@@ -23,30 +23,45 @@
 module ALU (
     input [31 : 0]           srcA,
     input [31 : 0]           srcB,
-    input [2 : 0]           aluop,
-    output logic [31 : 0]    alures,
-    output logic            ZF
+    input [3 : 0]           aluop,
+    output logic [31 : 0]    alures
 );
     
-    localparam AND = 3'b000;
-    localparam OR = 3'b001;
-    localparam ADD = 3'b010;
-    localparam LUI = 3'b011;
-    localparam SUB = 3'b100;
-    localparam COMP = 3'b101;
+    localparam ADD = 4'b0001;
+    localparam SUB = 4'b0010;
+    localparam OR = 4'b0100;
+    localparam SLT = 4'b1000;
 
+    logic [31 : 0] B_mux, res;
+    logic cin, cout, lower_out;
+    
+    rca adder(
+        .A(srcA),
+        .B(B_mux),
+        .Cin(cin),
+        .S(res),
+        .Cout(cout)
+    );
+    
+    assign B_mux = (aluop == SUB || aluop == SLT) ? ~srcB : srcB;
+    assign cin = (aluop == SUB || aluop == SLT) ? 1'b1 : 1'b0;
+    
     always_comb begin
         case (aluop)
-            AND : alures = srcA & srcB;
-            OR : alures = srcA | srcB;
-            ADD : alures = $signed(srcA) + $signed(srcB);
-            LUI : 
-            SUB : alures = $signed(srcA) - $signed(srcB);
-            COMP : alures = $signed(srcA) < $signed(srcB) ? 1 : 0;
-            default : alures = 0;
+            ADD, SUB: alures = res;
+            OR: alures = srcA | srcB;
+            SLT: begin
+                if({srcA[31], srcB[31]} == 2'b10) alures = 1;
+                else if ({srcA[31], srcB[31]} == 2'b01) alures = 0;
+                else begin
+                    if(res[31]) alures = 1;
+                    else alures = 0;
+                end
+            end
+            default: alures = 0;
         endcase
     end
 
-    assign ZF = !alures;
+//    assign ZF = !alures;
 
 endmodule

@@ -1,4 +1,5 @@
 `timescale 1ns / 1ps
+`include "defines.sv"
 //////////////////////////////////////////////////////////////////////////////////
 // Company: 
 // Engineer: 
@@ -34,7 +35,7 @@ module RegFile(
     logic [31:0] regmem [31:0]; // 寄存器由32个32位寄存器组成
     
     always_ff @ (posedge cpu_clk) begin
-        if(writeEnable) regmem[addr3] <= writeData3;
+        if(writeEnable == `WRITE_ENABLE) regmem[addr3] <= writeData3;
     end
     
     assign readData1 = regmem[addr1];
