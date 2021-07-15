@@ -14,7 +14,7 @@ module MiniMIPS32_SYS(
     logic [31:0] din;
     logic [31:0] dout;
     
-    //µØÖ·0x80000000¶ÔÓ¦ÈıÉ«LEDµÆ£¨ºìÂÌÀ¶¶ÔÓ¦led_rgb[2], led_rgb[1]ºÍled_rgb[0]£©£¬µØÖ·0x10000000¿ªÊ¼´æ·ÅÊı¾İ
+    // åœ°å€0x80000000å¯¹åº”ä¸‰è‰²LEDç¯ï¼ˆçº¢ç»¿è“å¯¹åº”led_rgb[2], led_rgb[1]å’Œled_rgb[0]ï¼‰ï¼Œåœ°å€0x10000000å¼€å§‹å­˜æ”¾æ•°æ®
     logic [2 : 0]   led_rgb_reg;
     always_ff @(posedge sys_clk_50MHz) begin
         if (!sys_rst_n) led_rgb_reg <= 3'b000;

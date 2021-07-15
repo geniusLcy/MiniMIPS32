@@ -3,9 +3,9 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 2021/06/14 16:46:01
+// Create Date: 2021/06/18 19:51:42
 // Design Name: 
-// Module Name: ALU
+// Module Name: alu
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -20,48 +20,26 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module ALU (
-    input [31 : 0]           srcA,
-    input [31 : 0]           srcB,
-    input [3 : 0]           aluop,
-    output logic [31 : 0]    alures
-);
-    
-    localparam ADD = 4'b0001;
-    localparam SUB = 4'b0010;
-    localparam OR = 4'b0100;
-    localparam SLT = 4'b1000;
-
-    logic [31 : 0] B_mux, res;
-    logic cin, cout, lower_out;
-    
-    rca adder(
-        .A(srcA),
-        .B(B_mux),
-        .Cin(cin),
-        .S(res),
-        .Cout(cout)
+module alu(
+    input [31 : 0] a,
+    input [31 : 0] b,
+    input [2 : 0] aluop,
+    output logic [31 : 0] res,
+    output logic ZF // zero
     );
-    
-    assign B_mux = (aluop == SUB || aluop == SLT) ? ~srcB : srcB;
-    assign cin = (aluop == SUB || aluop == SLT) ? 1'b1 : 1'b0;
-    
+
     always_comb begin
-        case (aluop)
-            ADD, SUB: alures = res;
-            OR: alures = srcA | srcB;
-            SLT: begin
-                if({srcA[31], srcB[31]} == 2'b10) alures = 1;
-                else if ({srcA[31], srcB[31]} == 2'b01) alures = 0;
-                else begin
-                    if(res[31]) alures = 1;
-                    else alures = 0;
-                end
-            end
-            default: alures = 0;
+        unique case (aluop)
+            3'b000: res = a & b; 
+            3'b001: res = a | b;
+            3'b010: res = signed'(a) + signed'(b);
+            3'b011: res = b; // nop for lui
+            3'b110: res = signed'(a) - signed'(b);
+            3'b111: res = signed'(a) < signed'(b) ? 32'd1 : '0;
+            default: res = '0;
         endcase
     end
 
-//    assign ZF = !alures;
+    assign ZF = !res;
 
-endmodule
+endmodule: alu

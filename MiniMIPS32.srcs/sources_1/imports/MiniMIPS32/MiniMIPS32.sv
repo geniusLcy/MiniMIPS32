@@ -3,96 +3,103 @@
 module MiniMIPS32(
     input  logic cpu_clk,
     input  logic cpu_rst_n,
-    output logic [31:0] iaddr,
-    input  logic [31:0] inst,
-    output logic [31:0] daddr,
-    output logic we,
-    output logic [31:0] din,
-    input  logic [31:0] dout
+    output logic [31:0] iaddr, // transform address of instruction
+    input  logic [31:0] inst, // receive instruction from imem
+    output logic [31:0] daddr, // transform address of data
+    output logic we, // write enable
+    output logic [31:0] din, // data to write dmem
+    input  logic [31:0] dout // receive data from dmem
     );
+    /* instruction
+     [31---26|25---21|20---16|15---11|10---6|5---0]
+        op      rs      rt      rd      sa    func
+    */
+
+    // we(write enable) is equal to mem_write
+    // pc register is equal to iaddr
+    // aluout is equal to daddr
+    logic pc_src, mem_to_reg, alu_src, reg_dst, reg_write, jump;
+    logic [2 : 0] alu_control;
+    logic zero;
+    logic select_imm;
+
+    // data to write into RAM with normal order
+    logic [31 : 0] write_mem_data;
+    // data read from RAM with normal order
+    logic [31 : 0] read_mem_data;
+
+    // next address to fetch instruction
+    logic [31 : 0] instr_addr_o;
     
-    // 要求实现的MIPS为小端序
-    logic [31 : 0] inst_big2little;
-    assign inst_big2little = {inst[7 : 0], inst[15 : 8], inst[23 : 16], inst[31 : 24]};
-    
-    logic [31 : 0] dout_big2little;
-    assign dout_big2little = {dout[7 : 0], dout[15 : 8], dout[23 : 16], dout[31 : 24]};
-    
-    // 指令各个字段的分解
-    logic [5:0] op, funct;
-    logic [4:0] rs, rt, rd, shamt;
-    logic [15:0] imm;
-    logic [25:0] addr;
-    
-    inst_distr inst_translate(
-        .inst(inst_big2little),
-        .op(op),
-        .rs(rs),
-        .rt(rt),
-        .rd(rd),
-        .shamt(shamt),
-        .funct(funct),
-        .imm(imm),
-        .addr(addr)
-    );
-    
-    logic [31 : 0] alu_res;
-    logic [1 : 0] branch_sig;
-    logic [31 : 0] jmp_ins;
-    
-    // 跳转信号处理
+    // current instruction
+    logic [31 : 0] cur_instr;
+
+    // next address to fetch data
+    logic [31 : 0] data_addr_o;
+
     always_comb begin
-        if(!cpu_rst_n) jmp_ins = 0;
+        if(daddr[31 : 16] == 16'h8000 || daddr[31 : 16] == 16'h8004) begin
+            // IO device
+            din[31 : 0] = write_mem_data[31 : 0];
+        end
         else begin
-            case(branch_sig)
-                2'b00: begin
-                    if(alu_res == 0) jmp_ins = {{14{inst_big2little[15]}}, inst_big2little[15 : 0], 2'b00};
-                    else jmp_ins = 0;
-                end
-                2'b01: begin
-                    if(alu_res != 0) jmp_ins = {{14{inst_big2little[15]}}, inst_big2little[15 : 0], 2'b00};
-                    else jmp_ins = 0;   
-                end
-                default: jmp_ins = 0;
-            endcase;
+            // Memory
+            din[7 : 0] = write_mem_data[31 : 24];
+            din[15 : 8] = write_mem_data[23 : 16];
+            din[23 : 16] = write_mem_data[15 : 8];
+            din[31 : 24] = write_mem_data[7 : 0];      
         end
     end
-    
-    // PC实现部分
-    always_ff @(posedge cpu_clk) begin
-        if(!cpu_rst_n) iaddr <= 0;
-        else if(branch_sig) iaddr <= {iaddr[31 : 28], addr, 2'b00};
-        else iaddr <= iaddr + jmp_ins + 4;
-    end
-    
-    // 寄存器实现部分
-    logic [4 : 0] addr1, addr2, addr3;
-    logic [31 : 0] readData1, readData2, writeData3;
-    logic writeEnable;
-    
-    RegFile mipsRegisters(
-        .cpu_clk(cpu_clk),
-        .addr1(addr1),
-        .addr2(addr2),
-        .addr3(addr3),
-        .writeData3(writeData3),
-        .writeEnable(writeEnable),
-        .readData1(readData1),
-        .readData2(readData2)
+
+
+    assign read_mem_data[7 : 0] = dout[31 : 24];
+    assign read_mem_data[15 : 8] = dout[23 : 16];
+    assign read_mem_data[23 : 16] = dout[15 : 8];
+    assign read_mem_data[31 : 24] = dout[7 : 0];
+
+    assign cur_instr[7 : 0] = inst[31 : 24];
+    assign cur_instr[15 : 8] = inst[23 : 16];
+    assign cur_instr[23 : 16] = inst[15 : 8];
+    assign cur_instr[31 : 24] = inst[7 : 0];
+
+
+    assign daddr[31 : 0] = data_addr_o[31 : 0];
+    assign iaddr[31 : 0] = instr_addr_o[31 : 0];
+
+
+
+    control_unit control_unit(
+        .op(cur_instr[31 : 26]),
+        .funct(cur_instr[5 : 0]),
+        .zero(zero),
+        .mem_to_reg(mem_to_reg),
+        .mem_write(we),
+        .alu_src(alu_src),
+        .reg_dst(reg_dst),
+        .reg_write(reg_write),
+        .jump(jump),
+        .pc_src(pc_src),
+        .select_imm(select_imm),
+        .alu_control(alu_control)
+    );
+
+    data_path data_path(
+        .clk(cpu_clk),
+        .rst(cpu_rst_n),
+        .instr(cur_instr[25 : 0]),
+        .mem_to_reg(mem_to_reg),
+        .pc_src(pc_src),
+        .jump(jump),
+        .alu_control(alu_control),
+        .alu_src(alu_src),
+        .reg_dst(reg_dst),
+        .reg_write_i(reg_write),
+        .select_imm(select_imm),
+        .read_data(read_mem_data),
+        .pc_o(instr_addr_o),
+        .alu_res(data_addr_o),
+        .zero(zero),
+        .wd(write_mem_data)
     );
     
-    // ALU实现部分
-    logic [31 : 0] srcA, srcB;
-    logic [3 : 0] alu_op;
-    
-    ALU mipsALU(
-        .srcA(srcA),
-        .srcB(srcB),
-        .aluop(alu_op),
-        .alures(alu_res)
-    );
-    
-    // 控制逻辑
-    
-    
-endmodule
+endmodule: MiniMIPS32
