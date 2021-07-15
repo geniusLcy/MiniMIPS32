@@ -13,6 +13,8 @@
 !.gitignore
 !.gitattributes
 !README.md
+!benchmark
+!Logisim
 ###########################################################################
 ##	VIVADO
 #Source files:
