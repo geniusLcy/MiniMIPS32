@@ -1,1 +1,1 @@
-MiniMIPS32
+2440125	数字逻辑与数字系统 单周期MIPS处理器 SystemVerilog nexyddr4 vivado
